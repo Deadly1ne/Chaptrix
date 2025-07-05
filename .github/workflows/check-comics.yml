@@ -25,7 +25,7 @@ jobs:
         run: |
           # Create .env file with available secrets
           touch .env
-          if [[ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]]; then
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
             echo "DISCORD_WEBHOOK_URL=${{ secrets.DISCORD_WEBHOOK_URL }}" >> .env
           fi
           

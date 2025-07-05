@@ -23,16 +23,17 @@ jobs:
           
       - name: Set up environment variables
         run: |
-          if [[ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]]; then
+          touch .env
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
             echo "DISCORD_WEBHOOK_URL=${{ secrets.DISCORD_WEBHOOK_URL }}" >> .env
           fi
-          if [[ -n "${{ secrets.DISCORD_BOT_TOKEN }}" ]]; then
+          if [ -n "${{ secrets.DISCORD_BOT_TOKEN }}" ]; then
             echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> .env
           fi
-          if [[ -n "${{ secrets.DISCORD_CHANNEL_ID }}" ]]; then
+          if [ -n "${{ secrets.DISCORD_CHANNEL_ID }}" ]; then
             echo "DISCORD_CHANNEL_ID=${{ secrets.DISCORD_CHANNEL_ID }}" >> .env
           fi
-          if [[ -n "${{ secrets.GOOGLE_CREDENTIALS }}" ]]; then
+          if [ -n "${{ secrets.GOOGLE_CREDENTIALS }}" ]; then
             echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
           fi
           

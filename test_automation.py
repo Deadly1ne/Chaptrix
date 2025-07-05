@@ -43,8 +43,9 @@ def check_environment():
     discord_channel_id = os.getenv('DISCORD_CHANNEL_ID')
     
     if not discord_webhook and not (discord_bot_token and discord_channel_id):
-        logger.error("No Discord configuration found. Set either DISCORD_WEBHOOK_URL or both DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID")
-        return False
+        logger.warning("No Discord configuration found. Discord notifications will be disabled.")
+        # Continue execution even without Discord credentials
+        # return False
     
     # Check if we're running in GitHub Actions
     if os.getenv('GITHUB_ACTIONS') == 'true':
@@ -113,6 +114,16 @@ def check_discord():
     """Check Discord connectivity"""
     logger.info("Checking Discord connectivity...")
     
+    # Check if Discord credentials are available
+    webhook_url = os.getenv('DISCORD_WEBHOOK_URL')
+    bot_token = os.getenv('DISCORD_BOT_TOKEN')
+    channel_id = os.getenv('DISCORD_CHANNEL_ID')
+    
+    if not webhook_url and not (bot_token and channel_id):
+        logger.warning("No Discord credentials found. Skipping Discord connectivity test.")
+        # Return True to allow the automation to continue without Discord
+        return True
+    
     # Create a test image
     img = Image.new('RGB', (400, 200), color=(73, 109, 137))
     d = ImageDraw.Draw(img)
@@ -130,7 +141,6 @@ def check_discord():
     img_byte_arr.seek(0)
     
     # Try webhook method first
-    webhook_url = os.getenv('DISCORD_WEBHOOK_URL')
     if webhook_url:
         try:
             files = {'file': ('test.png', img_byte_arr, 'image/png')}
@@ -146,9 +156,6 @@ def check_discord():
             logger.error(f"Error sending Discord webhook: {e}")
     
     # Try bot method if webhook failed or not configured
-    bot_token = os.getenv('DISCORD_BOT_TOKEN')
-    channel_id = os.getenv('DISCORD_CHANNEL_ID')
-    
     if bot_token and channel_id:
         try:
             import discord
@@ -193,7 +200,8 @@ def check_discord():
             logger.error("Discord.py not installed. Run: pip install discord.py")
             return False
     
-    logger.error("No valid Discord configuration found")
+    logger.warning("Discord credentials found but all connection attempts failed")
+    # Return False only if credentials were provided but connection failed
     return False
 
 def check_image_processing():

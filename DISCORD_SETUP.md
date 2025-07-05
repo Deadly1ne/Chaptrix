@@ -2,6 +2,8 @@
 
 This guide explains how to set up Discord integration for Chaptrix automation, allowing you to receive notifications with chapter updates and download links.
 
+**Note: Discord integration is completely optional.** Chaptrix will work without Discord credentials, but you won't receive notifications about new chapters.
+
 ## Webhook Method vs. Bot Method
 
 Chaptrix supports two methods for Discord integration:
@@ -150,6 +152,15 @@ Consider customizing:
 - Embed colors and fields
 - Thumbnail and image attachments
 - Button labels and URLs
+
+## Disabling Discord Notifications
+
+If you want to disable Discord notifications entirely:
+
+1. Open `settings.json`
+2. Set `"upload_to_discord": false`
+
+This will prevent Chaptrix from attempting to send Discord notifications even if credentials are configured.
 
 ## Troubleshooting
 

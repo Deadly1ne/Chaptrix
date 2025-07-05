@@ -49,10 +49,12 @@ Add the following secrets to your GitHub repository:
 2. Click on "Settings" > "Secrets and variables" > "Actions"
 3. Add the following secrets:
 
-   - `DISCORD_WEBHOOK_URL`: Your Discord webhook URL
-   - `DISCORD_BOT_TOKEN`: Your Discord bot token (if using bot method)
-   - `DISCORD_CHANNEL_ID`: Your Discord channel ID (if using bot method)
    - `GOOGLE_CREDENTIALS`: The entire content of the Google service account JSON key file
+   - `DISCORD_WEBHOOK_URL` (optional): Your Discord webhook URL
+   - `DISCORD_BOT_TOKEN` (optional): Your Discord bot token (if using bot method)
+   - `DISCORD_CHANNEL_ID` (optional): Your Discord channel ID (if using bot method)
+   
+   Note: Discord integration is completely optional. Chaptrix will work without Discord credentials.
 
 ### 4. Modify Your Code (if needed)
 

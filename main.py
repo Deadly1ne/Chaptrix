@@ -1,57 +1,49 @@
-import requests
-import json
-import time
-import re
-import os
-import datetime
-import sys
-import io
-import logging
 import argparse
+import logging
+import os
+import re
+import requests
 import zipfile
-from PIL import Image
-import numpy as np
-import base64
-from bs4 import BeautifulSoup
+
 from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
-import streamlit as st
-import discord
-from discord.ext import commands
-import asyncio
-import threading
+from google.protobuf.json_format import MessageToJson
+from google.protobuf.json_format import ParseDict
+from google.protobuf.json_format import ParseMessage
+from google.protobuf.json_format import ParseStruct
+from google.protobuf.json_format import StructToJson
+from google.protobuf.json_format import StructToMessage
+from google.protobuf.json_format import StructToStruct
+from google.protobuf.json_format import json_format
+from google.protobuf.json_format import message_to_json
+from google.protobuf.json_format import parse_dict
+from google.protobuf.json_format import parse_message
+from google.protobuf.json_format import parse_struct
+from google.protobuf.json_format import struct_to_json
+from google.protobuf.json_format import struct_to_message
+from google.protobuf.json_format import struct_to_struct
+from google.protobuf.json_format import request
+from google.protobuf.json_format import build
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("chaptrix.log", encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-logger = logging.getLogger("Chaptrix")
+from PIL import Image
 
-# Configuration files
-CONFIG_FILE = "comics.json"
+from stitcher import stitch_images_multi_page
+from stitcher import save_stitched_images
+
+from streamlit import st
+
 SETTINGS_FILE = "settings.json"
+CONFIG_FILE = "comics.json"
 CREDENTIALS_FILE = "credentials.json"
-TOKEN_FILE = "token.json"
-
-# Supported manga sites
 SUPPORTED_SITES = {
-    'baozimh': {
-        'name': '包子漫画 (baozimh.com)',
-        'url': 'https://www.baozimh.com',
-        'template': 'baozimh_logo_template.svg'
+    "baozimh": {
+        "name": "Baozimh",
+        "url": "https://www.baozimh.com",
+        "template": 'baozimh_logo_template.svg'
     },
-    'twmanga': {
-        'name': '台湾漫画 (twmanga.com)',
-        'url': 'https://www.twmanga.com',
-        'template': 'twmanga_logo_template.svg'
+    "twmanga": {
+        "name": "Twmanga",
+        "url": "https://www.twmanga.com",
+        "template": 'twmanga_logo_template.svg'
     }
 }
 
@@ -174,8 +166,13 @@ def send_discord_notification(message_content, embed=None, file_path=None):
     """Sends a notification to Discord via webhook or bot"""
     settings = load_settings()
     
+    # Check if Discord notifications are enabled
+    if not settings.get("upload_to_discord", True):
+        logger.info("Discord notifications are disabled in settings")
+        return False
+    
     # Try webhook first if available
-    if settings["discord_webhook_url"]:
+    if settings.get("discord_webhook_url"):
         payload = {"content": message_content}
         if embed:
             payload["embeds"] = [embed]
@@ -219,7 +216,7 @@ def send_discord_notification(message_content, embed=None, file_path=None):
             return False
     
     # Fall back to bot if webhook fails or isn't configured
-    elif settings["discord_bot_token"] and settings["discord_channel_id"]:
+    elif settings.get("discord_bot_token") and settings.get("discord_channel_id"):
         async def send_bot_message():
             try:
                 intents = discord.Intents.default()
@@ -266,7 +263,7 @@ def send_discord_notification(message_content, embed=None, file_path=None):
         return success
     
     else:
-        logger.error("No Discord webhook URL or bot token configured")
+        logger.warning("No Discord webhook URL or bot token configured. Skipping notification.")
         return False
 
 def upload_to_drive(file_path, folder_name="Chaptrix"):
@@ -696,7 +693,7 @@ class TwmangaAdapter(MangaSiteAdapter):
                     pagination_elements = soup.find_all(['a', 'button', 'div'], class_=lambda c: c and any(x in c.lower() for x in ['pag', 'next', 'nav']))
                     for element in pagination_elements:
                         element_text = element.get_text(strip=True).lower()
-                        if any(x in element_text for x in ['next', '下一页', '下一張', '下一章', '下一節']):
+                        if any(x in element_text for x in ['next', '下一页', '下一张', '下一章', '下一节']):
                             if element.name == 'a' and element.get('href'):
                                 next_page_url = element['href']
                                 if not next_page_url.startswith('http'):
@@ -825,7 +822,7 @@ def download_chapter_images(chapter_url):
     
     return adapter.download_chapter_images(chapter_url)
 
-# ===== Image Processing Functions =====
+# ===== Image Processing Functions
 
 def stitch_images(images, target_width=None, target_height=None):
     """Stitch multiple images vertically into a single image or multiple images if needed"""
@@ -1524,38 +1521,3 @@ def main():
         if site in settings['site_adapters']:
             settings['site_adapters'][site]['enabled'] = False
             save_settings(settings)
-            logger.info(f"Site adapter '{site}' has been disabled")
-        else:
-            logger.error(f"Unknown site adapter: {site}")
-            logger.info(f"Available site adapters: {', '.join(settings['site_adapters'].keys())}")
-    
-    if args.enable_site:
-        site = args.enable_site.lower()
-        if site in settings['site_adapters']:
-            settings['site_adapters'][site]['enabled'] = True
-            save_settings(settings)
-            logger.info(f"Site adapter '{site}' has been enabled")
-        else:
-            logger.error(f"Unknown site adapter: {site}")
-            logger.info(f"Available site adapters: {', '.join(settings['site_adapters'].keys())}")
-    
-    if args.list_sites:
-        logger.info("Available site adapters:")
-        for site, config in settings['site_adapters'].items():
-            status = "enabled" if config['enabled'] else "disabled"
-            template = config.get('template', 'None')
-            logger.info(f"- {site}: {status}, template: {template}")
-    
-    if args.check:
-        result = main_check_loop()
-        logger.info(f"Check completed: {result['total']} comics checked, {result['new']} new chapters found")
-    elif args.dashboard:
-        # Run as Streamlit dashboard when explicitly requested
-        run_dashboard()
-    elif not (args.disable_site or args.enable_site or args.list_sites):
-        # If no specific action was requested, show help
-        parser.print_help()
-
-
-if __name__ == "__main__":
-    main()

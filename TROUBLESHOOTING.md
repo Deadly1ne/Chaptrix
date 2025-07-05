@@ -66,6 +66,8 @@ This guide helps you diagnose and resolve common issues with the Chaptrix automa
 
 ## Discord Notification Issues
 
+**Note: Discord integration is completely optional.** Chaptrix will work without Discord credentials, but you won't receive notifications about new chapters.
+
 ### Missing Notifications
 
 **Symptoms:**
@@ -73,10 +75,11 @@ This guide helps you diagnose and resolve common issues with the Chaptrix automa
 - No errors in the workflow logs
 
 **Possible Solutions:**
-1. **Webhook URL**: Verify the `DISCORD_WEBHOOK_URL` secret is correct
-2. **Bot token**: If using a bot, check the `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` secrets
-3. **Rate limiting**: Discord may rate-limit frequent messages; add delays between notifications
-4. **Message content**: Ensure the message content complies with Discord's requirements
+1. **Integration disabled**: Check if `upload_to_discord` is set to `false` in `settings.json`
+2. **Webhook URL**: Verify the `DISCORD_WEBHOOK_URL` secret is correct
+3. **Bot token**: If using a bot, check the `DISCORD_BOT_TOKEN` and `DISCORD_CHANNEL_ID` secrets
+4. **Rate limiting**: Discord may rate-limit frequent messages; add delays between notifications
+5. **Message content**: Ensure the message content complies with Discord's requirements
 
 ### File Attachment Issues
 

@@ -21,9 +21,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
+      - name: Set up environment variables
+        run: |
+          # Create .env file with available secrets
+          touch .env
+          if [[ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]]; then
+            echo "DISCORD_WEBHOOK_URL=${{ secrets.DISCORD_WEBHOOK_URL }}" >> .env
+          fi
+          
       - name: Run bot
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python main.py --check
         
       - name: Commit changes

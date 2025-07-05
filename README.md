@@ -20,8 +20,8 @@ An all-in-one manga chapter notification and download bot for baozimh.com
 ### Prerequisites
 
 - Python 3.8 or higher
-- A Discord account (for webhook/bot setup)
-- A Google account (for Drive integration)
+- A Discord account (optional, only if you want notifications)
+- A Google account (optional, only if you want Drive integration)
 
 ### Installation
 
@@ -32,12 +32,13 @@ An all-in-one manga chapter notification and download bot for baozimh.com
    pip install -r requirements.txt
    ```
 
-3. Set up Discord webhook (required for notifications):
+3. Set up Discord webhook (optional, for notifications):
    - Create a Discord server or use an existing one
    - Create a channel for notifications
    - Go to Channel Settings > Integrations > Webhooks > New Webhook
    - Copy the webhook URL
    - Add it to the settings in the dashboard
+   - Note: Discord integration is completely optional. Chaptrix will work without it.
 
 4. Set up Google Drive API (optional, for Drive uploads):
    - Go to [Google Cloud Console](https://console.cloud.google.com/)

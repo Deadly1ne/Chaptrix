@@ -1,0 +1,41 @@
+# Credentials and tokens
+credentials.json
+token.json
+
+# Environment variables
+.env
+
+# Downloaded and processed files
+downloads/
+processed/
+templates/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.env/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+chaptrix.log
+
+# OS specific files
+.DS_Store
+Thumbs.db

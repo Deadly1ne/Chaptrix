@@ -1,0 +1,14 @@
+{
+    "check_interval": 14400,
+    "image_width": 800,
+    "image_height": 12000,
+    "upload_to_drive": true,
+    "upload_to_discord": true,
+    "download_path": "downloads",
+    "processed_path": "processed",
+    "discord_webhook_url": "https://discord.com/api/webhooks/1391003941961207908/I94JGWvB_vkq5tVlCKY0wNxbovgVjtH5ATfWE8nIgMQA5K2bFTYEDxATYApsXTPOu3Be",
+    "discord_bot_token": "",
+    "discord_channel_id": "",
+    "enable_banner_cropping": true,
+    "image_quality": 100
+}

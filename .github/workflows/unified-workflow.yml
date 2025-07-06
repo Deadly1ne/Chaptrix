@@ -10,7 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -33,10 +38,7 @@ jobs:
           if [ -n "${{ secrets.DISCORD_CHANNEL_ID }}" ]; then
             echo "DISCORD_CHANNEL_ID=${{ secrets.DISCORD_CHANNEL_ID }}" >> .env
           fi
-          if [ -n "${{ secrets.GOOGLE_CREDENTIALS }}" ]; then
-            echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
-          fi
-          
+
       - name: Run unified workflow
         run: python unified_workflow.py
         

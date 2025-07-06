@@ -37,7 +37,7 @@ from bs4 import BeautifulSoup
 
 from stitcher import stitch_images_multi_page
 from stitcher import save_stitched_images
-from utils import handle_error as utils_handle_error, setup_logging, load_json_config, save_json_config
+from utils import handle_error as utils_handle_error, setup_logging, load_json_config, save_json_config, transform_image_url
 
 # Import streamlit only if it's available
 try:
@@ -89,13 +89,7 @@ DEFAULT_SETTINGS = {
     }
 }
 
-# Regular expression for baozimh CDN URLs
-BAOZI_CDN_REGEX = r'^https?://(?:[\w-]+)\.baozicdn\.com/(.+)$'
-BAOZI_CDN_REPLACEMENT = r'https://static-tw.baozimh.com/\1'
-
-# Regular expression for twmanga CDN URLs
-TWMANGA_CDN_REGEX = r'http://cdn.twmanga.com/comics/(.*)'
-TWMANGA_CDN_REPLACEMENT = r'https://static.twmanga.com/comics/\1'
+# CDN URL transformation is now handled by utils.transform_image_url()
 
 # ===== Utility Functions =====
 
@@ -516,8 +510,8 @@ class BaozimhAdapter(MangaSiteAdapter):
                             logger.info(f"Skipping duplicate image: {img_url}")
                             continue
                             
-                        # Apply CDN regex replacement if needed
-                        img_url = re.sub(BAOZI_CDN_REGEX, BAOZI_CDN_REPLACEMENT, img_url)
+                        # Transform URL to bypass watermarks (baozicdn -> static-tw.baozimh.com)
+                        img_url = transform_image_url(img_url)
                         
                         # Download the image
                         try:
@@ -701,8 +695,8 @@ class TwmangaAdapter(MangaSiteAdapter):
                             logger.info(f"Skipping duplicate image: {img_url}")
                             continue
                             
-                        # Apply CDN regex replacement if needed
-                        img_url = re.sub(TWMANGA_CDN_REGEX, TWMANGA_CDN_REPLACEMENT, img_url)
+                        # Transform URL to bypass watermarks
+                        img_url = transform_image_url(img_url)
                         
                         # Download the image
                         try:

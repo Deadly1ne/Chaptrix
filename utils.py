@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import re
 from typing import Optional, Any
 
 def handle_error(error, context="operation", critical=False, additional_info=None):
@@ -104,3 +105,43 @@ def ensure_directory_exists(directory_path: str) -> bool:
     except Exception as e:
         handle_error(e, f"creating directory {directory_path}")
         return False
+
+def transform_image_url(url: str) -> str:
+    """
+    Transform CDN URLs to bypass watermarks for supported manga sites.
+    This implements URL transformations similar to the Image Picka extension.
+    
+    Supported transformations:
+    - baozicdn.com -> static-tw.baozimh.com (baozimh)
+    - cdn.twmanga.com -> static.twmanga.com (twmanga)
+    
+    Args:
+        url: Original image URL
+        
+    Returns:
+        Transformed URL or original URL if no transformation needed
+    """
+    try:
+        original_url = url
+        
+        # Transform baozimh CDN URLs
+        # Pattern: ^https?://(?:[\w-]+).baozicdn.com/(.+)$
+        # Replacement: https://static-tw.baozimh.com/$1
+        baozi_pattern = r'^https?://(?:[\w-]+)\.baozicdn\.com/(.+)$'
+        baozi_replacement = r'https://static-tw.baozimh.com/\1'
+        url = re.sub(baozi_pattern, baozi_replacement, url)
+        
+        # Transform twmanga CDN URLs
+        # Pattern: http://cdn.twmanga.com/comics/(.*)
+        # Replacement: https://static.twmanga.com/comics/$1
+        twmanga_pattern = r'http://cdn\.twmanga\.com/comics/(.*)'
+        twmanga_replacement = r'https://static.twmanga.com/comics/\1'
+        url = re.sub(twmanga_pattern, twmanga_replacement, url)
+        
+        if url != original_url:
+            logging.info(f"URL transformed: {original_url} -> {url}")
+        
+        return url
+    except Exception as e:
+        handle_error(e, f"transforming URL {url}")
+        return url

@@ -9,6 +9,19 @@ import time
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from stitcher import stitch_images_multi_page, save_stitched_images
 
+# Import handle_error from main.py
+try:
+    from main import handle_error
+except ImportError:
+    # Fallback if handle_error is not available
+    def handle_error(message, exception=None, critical=True):
+        if critical:
+            logger.error(message)
+        else:
+            logger.warning(message)
+        if exception:
+            logger.error(f"Exception details: {str(exception)}")
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -99,21 +112,21 @@ def test_stitcher():
     print(f"Stitched images result: {stitched_images is not None}, count: {len(stitched_images) if stitched_images else 0}")
     
     if not stitched_images:
-        logger.error("Test 1 failed: stitch_images_multi_page returned empty list")
+        handle_error("Test 1 failed: stitch_images_multi_page returned empty list")
         return False
     
     # Save the stitched images
     output_path_template = os.path.join(test_dir, "basic_stitch.jpg")
     saved_files = save_stitched_images(stitched_images, output_path_template)
     if not saved_files:
-        logger.error("Test 1 failed: Could not save stitched images")
+        handle_error("Test 1 failed: Could not save stitched images")
         return False
     
     # Verify dimensions of first image
     stitched_img = stitched_images[0]
     expected_width = max(img.width for img in test_images)
     if stitched_img.width != expected_width:
-        logger.error(f"Test 1 failed: Expected width {expected_width}, got {stitched_img.width}")
+        handle_error(f"Test 1 failed: Expected width {expected_width}, got {stitched_img.width}")
         return False
     
     # Test 2: Custom width
@@ -122,20 +135,20 @@ def test_stitcher():
     stitched_images = stitch_images_multi_page(test_images, target_width=custom_width)
     
     if not stitched_images:
-        logger.error("Test 2 failed: stitch_images_multi_page returned empty list")
+        handle_error("Test 2 failed: stitch_images_multi_page returned empty list")
         return False
     
     # Save the stitched images
     output_path_template = os.path.join(test_dir, "custom_width_stitch.jpg")
     saved_files = save_stitched_images(stitched_images, output_path_template)
     if not saved_files:
-        logger.error("Test 2 failed: Could not save stitched images")
+        handle_error("Test 2 failed: Could not save stitched images")
         return False
     
     # Verify dimensions
     stitched_img = stitched_images[0]
     if stitched_img.width != custom_width:
-        logger.error(f"Test 2 failed: Expected width {custom_width}, got {stitched_img.width}")
+        handle_error(f"Test 2 failed: Expected width {custom_width}, got {stitched_img.width}")
         return False
     
     # Test 3: Custom max height (to force multiple images)
@@ -144,19 +157,19 @@ def test_stitcher():
     stitched_images = stitch_images_multi_page(test_images, max_height=custom_max_height)
     
     if not stitched_images:
-        logger.error("Test 3 failed: stitch_images_multi_page returned empty list")
+        handle_error("Test 3 failed: stitch_images_multi_page returned empty list")
         return False
     
     # Save the stitched images
     output_path_template = os.path.join(test_dir, "custom_height_stitch.jpg")
     saved_files = save_stitched_images(stitched_images, output_path_template)
     if not saved_files:
-        logger.error("Test 3 failed: Could not save stitched images")
+        handle_error("Test 3 failed: Could not save stitched images")
         return False
     
     # Verify we have multiple images due to height restriction
     if len(stitched_images) < 2:
-        logger.error(f"Test 3 failed: Expected multiple images due to height restriction, got {len(stitched_images)}")
+        handle_error(f"Test 3 failed: Expected multiple images due to height restriction, got {len(stitched_images)}")
         return False
     
     # Test 4: Empty image list
@@ -164,7 +177,7 @@ def test_stitcher():
     stitched_images = stitch_images_multi_page([])
     
     if stitched_images:
-        logger.error("Test 4 failed: Expected empty list for empty image list")
+        handle_error("Test 4 failed: Expected empty list for empty image list")
         return False
     
     # Test 5: Performance test with many images
@@ -176,14 +189,14 @@ def test_stitcher():
     elapsed_time = time.time() - start_time
     
     if not stitched_images:
-        logger.error("Test 5 failed: stitch_images_multi_page returned empty list")
+        handle_error("Test 5 failed: stitch_images_multi_page returned empty list")
         return False
     
     # Save the stitched images
     output_path_template = os.path.join(test_dir, "performance_test_stitch.jpg")
     saved_files = save_stitched_images(stitched_images, output_path_template)
     if not saved_files:
-        logger.error("Test 5 failed: Could not save stitched images")
+        handle_error("Test 5 failed: Could not save stitched images")
         return False
     
     logger.info(f"Performance test completed in {elapsed_time:.2f} seconds")
@@ -209,14 +222,14 @@ def test_save_stitched_images():
     saved_files = save_stitched_images(test_images, output_path_template)
     
     if not saved_files or len(saved_files) != 3:
-        logger.error(f"Expected 3 saved files, got {len(saved_files) if saved_files else 0}")
+        handle_error(f"Expected 3 saved files, got {len(saved_files) if saved_files else 0}")
         return False
     
     # Check if the files follow the new naming convention (1.jpg, 2.jpg, 3.jpg)
     expected_filenames = [os.path.join(test_dir, f"{i+1}.jpg") for i in range(3)]
     for expected, actual in zip(expected_filenames, saved_files):
         if os.path.basename(expected) != os.path.basename(actual):
-            logger.error(f"Expected filename {os.path.basename(expected)}, got {os.path.basename(actual)}")
+            handle_error(f"Expected filename {os.path.basename(expected)}, got {os.path.basename(actual)}")
             return False
     
     logger.info("All files saved with correct naming convention")
@@ -238,7 +251,7 @@ def save_stitched_image(image, output_path, quality=90, format="JPEG"):
         logger.info(f"Saved stitched image to {output_path}")
         return True
     except Exception as e:
-        logger.error(f"Error saving stitched image: {e}")
+        handle_error(f"Error saving stitched image: {e}", e)
         return False
 
 if __name__ == "__main__":
@@ -248,7 +261,7 @@ if __name__ == "__main__":
         basic_tests_passed = test_stitcher()
         print(f"Basic tests passed: {basic_tests_passed}")
     except Exception as e:
-        logger.error(f"Error in test_stitcher: {str(e)}")
+        handle_error(f"Error in test_stitcher: {str(e)}", e)
         print(f"Error in test_stitcher: {str(e)}")
         basic_tests_passed = False
     
@@ -256,7 +269,7 @@ if __name__ == "__main__":
         naming_tests_passed = test_save_stitched_images()
         print(f"Naming tests passed: {naming_tests_passed}")
     except Exception as e:
-        logger.error(f"Error in test_save_stitched_images: {str(e)}")
+        handle_error(f"Error in test_save_stitched_images: {str(e)}", e)
         print(f"Error in test_save_stitched_images: {str(e)}")
         naming_tests_passed = False
     
@@ -265,6 +278,6 @@ if __name__ == "__main__":
         print("\nSUCCESS: Stitcher is working correctly!")
         sys.exit(0)
     else:
-        logger.error("Stitcher tests failed!")
+        handle_error("Stitcher tests failed!")
         print("\nERROR: Stitcher tests failed. Check the logs for details.")
         sys.exit(1)

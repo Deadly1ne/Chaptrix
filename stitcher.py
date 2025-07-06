@@ -4,6 +4,16 @@ from PIL import Image
 import numpy as np
 import time
 
+# Import handle_error from main.py
+try:
+    from main import handle_error
+except ImportError:
+    # Fallback if handle_error is not available
+    def handle_error(error, context, critical=False, additional_info=None):
+        logger.error(f"{context}: {str(error)}")
+        if additional_info:
+            logger.info(f"Additional info: {additional_info}")
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -31,7 +41,7 @@ def stitch_images_multi_page(images, target_width=800, max_height=12000, quality
         List of PIL Image objects for the stitched images or empty list if an error occurred
     """
     if not images:
-        logger.error("No images to stitch")
+        handle_error(ValueError("No images to stitch"), "stitching images", critical=False)
         return []
     
     try:
@@ -96,7 +106,7 @@ def stitch_images_multi_page(images, target_width=800, max_height=12000, quality
         return stitched_images
     
     except Exception as e:
-        logger.error(f"Error stitching images: {e}")
+        handle_error(e, "stitching images", critical=False)
         return []
 
 
@@ -130,13 +140,13 @@ def create_single_stitched_image(image_data, target_width):
                 resized_img = None
                 
             except Exception as e:
-                logger.error(f"Error processing image {i+1}: {e}")
+                handle_error(e, f"processing image {i+1}", critical=False)
                 # Continue with remaining images
         
         return stitched_img
     
     except Exception as e:
-        logger.error(f"Error creating stitched image: {e}")
+        handle_error(e, "creating stitched image", critical=False)
         return None
 
 
@@ -155,7 +165,7 @@ def save_stitched_images(stitched_images, output_path_template, quality=90, form
         list: List of saved file paths, empty if failed
     """
     if not stitched_images:
-        logger.error("No images to save")
+        handle_error(ValueError("No images to save"), "saving stitched images", critical=False)
         return []
     
     saved_paths = []
@@ -185,7 +195,7 @@ def save_stitched_images(stitched_images, output_path_template, quality=90, form
         return saved_paths
         
     except Exception as e:
-        logger.error(f"Error saving stitched images: {e}")
+        handle_error(e, "saving stitched images", critical=False)
         return saved_paths
 
 
@@ -204,7 +214,7 @@ def stitch_folder_multi_page(input_folder, output_file, target_width=None, max_h
         list: List of saved file paths, empty if failed
     """
     if not os.path.exists(input_folder):
-        logger.error(f"Input folder does not exist: {input_folder}")
+        handle_error(FileNotFoundError(f"Input folder does not exist: {input_folder}"), "stitching folder", critical=False)
         return []
     
     try:
@@ -213,7 +223,7 @@ def stitch_folder_multi_page(input_folder, output_file, target_width=None, max_h
                       if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
         
         if not image_files:
-            logger.error(f"No image files found in {input_folder}")
+            handle_error(ValueError(f"No image files found in {input_folder}"), "stitching folder", critical=False)
             return []
         
         # Sort files numerically if possible
@@ -233,7 +243,7 @@ def stitch_folder_multi_page(input_folder, output_file, target_width=None, max_h
                 img = Image.open(img_path)
                 images.append(img)
             except Exception as e:
-                logger.error(f"Error loading image {img_file}: {e}")
+                handle_error(e, f"loading image {img_file}", critical=False)
         
         # Stitch images
         stitched_images = stitch_images_multi_page(images, target_width, max_height, quality)
@@ -245,7 +255,7 @@ def stitch_folder_multi_page(input_folder, output_file, target_width=None, max_h
             return []
             
     except Exception as e:
-        logger.error(f"Error stitching folder: {e}")
+        handle_error(e, "stitching folder", critical=False)
         return []
 
 

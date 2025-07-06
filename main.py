@@ -132,7 +132,7 @@ def load_settings():
         save_settings(DEFAULT_SETTINGS)
         return DEFAULT_SETTINGS
     except json.JSONDecodeError:
-        logger.error(f"Error reading '{SETTINGS_FILE}'. File might be malformed. Using defaults.")
+        handle_error(e, "reading settings file", critical=False, additional_info=f"File '{SETTINGS_FILE}' might be malformed. Using defaults.")
         return DEFAULT_SETTINGS
 
 def save_settings(settings):
@@ -142,7 +142,7 @@ def save_settings(settings):
             json.dump(settings, f, indent=4, ensure_ascii=False)
         logger.info(f"Saved settings to '{SETTINGS_FILE}'.")
     except IOError as e:
-        logger.error(f"Error saving '{SETTINGS_FILE}': {e}")
+        handle_error(e, "saving settings file", critical=False, additional_info=f"Could not save to '{SETTINGS_FILE}'")
 
 def load_tracked_comics():
     """Loads the list of tracked comics from comics.json"""
@@ -153,7 +153,7 @@ def load_tracked_comics():
         logger.info(f"'{CONFIG_FILE}' not found. Creating an empty list for tracked comics.")
         return []
     except json.JSONDecodeError:
-        logger.error(f"Error reading '{CONFIG_FILE}'. File might be empty or malformed. Starting with empty list.")
+        handle_error(e, "reading comics configuration file", critical=False, additional_info=f"File '{CONFIG_FILE}' might be empty or malformed. Starting with empty list.")
         return []
 
 def save_tracked_comics(comics):
@@ -163,7 +163,7 @@ def save_tracked_comics(comics):
             json.dump(comics, f, indent=4, ensure_ascii=False)
         logger.info(f"Saved updated comic data to '{CONFIG_FILE}'.")
     except IOError as e:
-        logger.error(f"Error saving '{CONFIG_FILE}': {e}")
+        handle_error(e, "saving comics configuration file", critical=False, additional_info=f"Could not save to '{CONFIG_FILE}'")
 
 def get_drive_service():
     """Get authenticated Google Drive service"""
@@ -172,25 +172,25 @@ def get_drive_service():
         try:
             creds = Credentials.from_authorized_user_info(json.load(open(TOKEN_FILE)))
         except Exception as e:
-            logger.error(f"Error loading token file: {e}")
+            handle_error(e, "loading token file", critical=False)
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
             except Exception as e:
-                logger.error(f"Error refreshing credentials: {e}")
+                handle_error(e, "refreshing credentials", critical=True)
                 return None
         else:
             if not os.path.exists(CREDENTIALS_FILE):
-                logger.error(f"'{CREDENTIALS_FILE}' not found. Please download it from Google Cloud Console.")
+                handle_error(FileNotFoundError(f"'{CREDENTIALS_FILE}' not found"), "accessing Google Drive", critical=True, additional_info="Please download it from Google Cloud Console.")
                 return None
                 
             try:
                 flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
                 creds = flow.run_local_server(port=8080)
             except Exception as e:
-                logger.error(f"Error in authentication flow: {e}")
+                handle_error(e, "authentication flow", critical=True)
                 return None
                 
         with open(TOKEN_FILE, 'w') as token:
@@ -252,7 +252,7 @@ def send_discord_notification(message_content, embed=None, file_path=None):
                 logger.info("Discord webhook notification sent successfully without file attachment")
                 return True
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error sending Discord webhook notification: {e}")
+            handle_error(e, "sending Discord webhook notification", critical=False)
             return False
     
     # Fall back to bot if webhook fails or isn't configured
@@ -268,7 +268,7 @@ def send_discord_notification(message_content, embed=None, file_path=None):
                     try:
                         channel = bot.get_channel(int(settings["discord_channel_id"]))
                         if not channel:
-                            logger.error(f"Could not find channel with ID {settings['discord_channel_id']}")
+                            handle_error(ValueError(f"Could not find channel with ID {settings['discord_channel_id']}"), "sending Discord bot notification", critical=False)
                             await bot.close()
                             return
                         
@@ -286,14 +286,14 @@ def send_discord_notification(message_content, embed=None, file_path=None):
                         
                         logger.info(f"Discord bot message sent successfully! File: {file_path if file_path else 'None'}")
                     except Exception as e:
-                        logger.error(f"Error in on_ready: {e}")
+                        handle_error(e, "sending Discord bot notification in on_ready event", critical=False)
                     finally:
                         await bot.close()
                 
                 await bot.start(settings["discord_bot_token"])
                 return True
             except Exception as e:
-                logger.error(f"Error with Discord bot: {e}")
+                handle_error(e, "initializing Discord bot", critical=False)
                 return False
         
         loop = asyncio.new_event_loop()
@@ -310,7 +310,7 @@ def upload_to_drive(file_path, folder_name="Chaptrix"):
     """Upload a file to Google Drive and return the shareable link"""
     service = get_drive_service()
     if not service:
-        logger.error("Failed to get Google Drive service")
+        handle_error(ValueError("Failed to get Google Drive service"), "uploading to Google Drive", critical=False)
         return None
     
     try:
@@ -360,7 +360,7 @@ def upload_to_drive(file_path, folder_name="Chaptrix"):
         return file['webViewLink']
     
     except Exception as e:
-        logger.error(f"Error uploading to Google Drive: {e}")
+        handle_error(e, "uploading to Google Drive", critical=False)
         return None
 
 # ===== Web Scraping Functions =====
@@ -419,13 +419,13 @@ class BaozimhAdapter(MangaSiteAdapter):
                         chapter_list_container = None
 
             if not chapter_list_container:
-                logger.error("No suitable chapter list container found on the page after all attempts.")
+                handle_error(ValueError("No suitable chapter list container found on the page after all attempts."), "finding chapter list container", critical=False)
                 return None, None
 
             chapter_links = chapter_list_container.find_all('a', class_='comics-chapters__item')
 
             if not chapter_links:
-                logger.error("No chapter links with class 'comics-chapters__item' found within the container.")
+                handle_error(ValueError("No chapter links with class 'comics-chapters__item' found within the container."), "finding chapter links", critical=False)
                 return None, None
 
             # Collect all chapters with their parsed numbers
@@ -448,7 +448,7 @@ class BaozimhAdapter(MangaSiteAdapter):
                     logger.warning(f"Could not find a numerical chapter in '{raw_text}'. Skipping for sorting.")
 
             if not chapters_data:
-                logger.error("No valid chapters found for sorting.")
+                handle_error(ValueError("No valid chapters found for sorting."), "sorting chapters", critical=False)
                 return None, None
 
             # Sort chapters by their numerical part in descending order
@@ -463,13 +463,13 @@ class BaozimhAdapter(MangaSiteAdapter):
             return chapter_name, latest_chapter_url
 
         except requests.exceptions.Timeout:
-            logger.error(f"Timeout error fetching {self.url}. The server might be slow or unresponsive.")
+            handle_error(Exception(f"Timeout error fetching {self.url}"), "fetching comic URL", critical=False)
             return None, None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error fetching {self.url}: {e}")
+            handle_error(e, "fetching comic URL", critical=False)
             return None, None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during scraping {self.url}: {e}")
+            handle_error(e, f"scraping {self.url}", critical=False)
             return None, None
     
     def download_chapter_images(self, chapter_url):
@@ -507,13 +507,13 @@ class BaozimhAdapter(MangaSiteAdapter):
                     # Find the container with chapter images
                     image_container = soup.find('div', class_='comic-contain')
                     if not image_container:
-                        logger.error(f"Could not find image container on page {page_count}")
+                        handle_error(ValueError(f"Could not find image container on page {page_count}"), "finding image container", critical=False)
                         break
                     
                     # Find all image elements
                     image_elements = image_container.find_all('img')
                     if not image_elements:
-                        logger.error(f"No images found on page {page_count}")
+                        handle_error(ValueError(f"No images found on page {page_count}"), "finding images", critical=False)
                         break
                     
                     # Process images on current page
@@ -546,7 +546,7 @@ class BaozimhAdapter(MangaSiteAdapter):
                             previous_page_images.append(img_url)  # Add to previous images for duplicate detection
                             logger.info(f"Downloaded image {i+1}/{len(image_elements)} from page {page_count}")
                         except Exception as e:
-                            logger.error(f"Error downloading image {i+1} from page {page_count}: {e}")
+                            handle_error(e, f"downloading image {i+1} from page {page_count}", critical=False)
                     
                     # Add page images to all images
                     all_images.extend(page_images)
@@ -643,13 +643,13 @@ class TwmangaAdapter(MangaSiteAdapter):
             # Find the chapter list container
             chapter_list = soup.find('ul', class_='chapter-list')
             if not chapter_list:
-                logger.error("Could not find chapter list on the page")
+                handle_error(ValueError("Could not find chapter list on the page"), "finding chapter list", critical=False)
                 return None, None
 
             # Find all chapter links
             chapter_links = chapter_list.find_all('a')
             if not chapter_links:
-                logger.error("No chapter links found within the chapter list")
+                handle_error(ValueError("No chapter links found within the chapter list"), "finding chapter links", critical=False)
                 return None, None
 
             # Get the latest chapter (usually the first one)
@@ -664,14 +664,14 @@ class TwmangaAdapter(MangaSiteAdapter):
             chapter_name = self.extract_chapter_number(latest_chapter_text)
             return chapter_name, latest_chapter_url
 
-        except requests.exceptions.Timeout:
-            logger.error(f"Timeout error fetching {self.url}. The server might be slow or unresponsive.")
+        except requests.exceptions.Timeout as e:
+            handle_error(e, f"timeout error fetching {self.url}", critical=False, additional_info="The server might be slow or unresponsive.")
             return None, None
         except requests.exceptions.RequestException as e:
-            logger.error(f"Network error fetching {self.url}: {e}")
+            handle_error(e, f"network error fetching {self.url}", critical=False)
             return None, None
         except Exception as e:
-            logger.error(f"An unexpected error occurred during scraping {self.url}: {e}")
+            handle_error(e, f"unexpected error during scraping {self.url}", critical=True)
             return None, None
     
     def download_chapter_images(self, chapter_url):
@@ -697,7 +697,7 @@ class TwmangaAdapter(MangaSiteAdapter):
                     # Find all image elements (twmanga uses amp-img tags with comic-contain__item class)
                     image_elements = soup.find_all('amp-img', class_='comic-contain__item')
                     if not image_elements:
-                        logger.error(f"No images found on page {page_count}")
+                        handle_error(ValueError(f"No images found on page {page_count}"), "finding images", critical=False)
                         break
                     
                     # Process images on current page
@@ -727,7 +727,7 @@ class TwmangaAdapter(MangaSiteAdapter):
                             previous_page_images.append(img_url)  # Add to previous images for duplicate detection
                             logger.info(f"Downloaded image {i+1}/{len(image_elements)} from page {page_count}")
                         except Exception as e:
-                            logger.error(f"Error downloading image {i+1} from page {page_count}: {e}")
+                            handle_error(e, f"downloading image {i+1} from page {page_count}", critical=False)
                     
                     # Add page images to all images
                     all_images.extend(page_images)
@@ -811,17 +811,20 @@ class TwmangaAdapter(MangaSiteAdapter):
                     page_count += 1
                     
                     # Add a small delay between page requests to avoid overloading the server
-                    time.sleep(1)
+                    try:
+                        time.sleep(1)
+                    except Exception as e:
+                        logger.warning(f"Error during sleep between page requests: {e}")
                     
                 except Exception as e:
-                    logger.error(f"Error processing page {page_count}: {e}")
+                    handle_error(e, f"processing page {page_count}", critical=False)
                     break
             
             logger.info(f"Finished downloading chapter. Total pages processed: {page_count}, total images: {len(all_images)}")
             return all_images
         
         except Exception as e:
-            logger.error(f"Error downloading chapter images: {e}")
+            handle_error(e, "downloading chapter images", critical=False)
             return []
 
 
@@ -836,7 +839,7 @@ def get_site_adapter(comic):
         elif 'twmanga.com' in comic['url']:
             site = 'twmanga'
         else:
-            logger.error(f"Unsupported site for URL: {comic['url']}")
+            handle_error(ValueError(f"Unsupported site for URL: {comic['url']}"), "determining site adapter", critical=False)
             return None
     
     # Create and return the appropriate adapter
@@ -845,7 +848,7 @@ def get_site_adapter(comic):
     elif site == 'twmanga':
         return TwmangaAdapter(comic['url'])
     else:
-        logger.error(f"No adapter available for site: {site}")
+        handle_error(ValueError(f"No adapter available for site: {site}"), "creating site adapter", critical=False)
         return None
 
 
@@ -863,7 +866,7 @@ def download_chapter_images(chapter_url):
     elif 'twmanga.com' in chapter_url:
         adapter = TwmangaAdapter(chapter_url)
     else:
-        logger.error(f"Unsupported site for URL: {chapter_url}")
+        handle_error(ValueError(f"Unsupported site for URL: {chapter_url}"), "determining adapter for chapter download", critical=False)
         return []
     
     return adapter.download_chapter_images(chapter_url)
@@ -873,7 +876,7 @@ def download_chapter_images(chapter_url):
 def stitch_images(images, target_width=None, target_height=None):
     """Stitch multiple images vertically into a single image or multiple images if needed"""
     if not images:
-        logger.error("No images to stitch")
+        handle_error(ValueError("No images to stitch"), "stitching images", critical=False)
         return None
     
     settings = load_settings()
@@ -897,7 +900,7 @@ def stitch_images(images, target_width=None, target_height=None):
             return None
     
     except ImportError:
-        logger.warning("Could not import multi-page stitcher, falling back to single-page stitching")
+        handle_error(ImportError("Could not import multi-page stitcher"), "importing stitcher module", critical=False, additional_info="Falling back to single-page stitching")
         try:
             # Calculate dimensions
             if target_width <= 0:
@@ -932,11 +935,11 @@ def stitch_images(images, target_width=None, target_height=None):
             return stitched_img
         
         except Exception as e:
-            logger.error(f"Error stitching images: {e}")
+            handle_error(e, "stitching images with single-page stitcher", critical=False)
             return None
     
     except Exception as e:
-        logger.error(f"Error stitching images: {e}")
+        handle_error(e, "stitching images with multi-page stitcher", critical=False)
         return None
 
 def remove_image_parts(image, template_image, threshold=0.8):
@@ -973,7 +976,7 @@ def remove_image_parts(image, template_image, threshold=0.8):
         return processed_image
     
     except Exception as e:
-        logger.error(f"Error removing image parts: {e}")
+        handle_error(e, "removing image parts", critical=False)
         return image  # Return original image if processing fails
 
 # ===== Main Bot Logic =====
@@ -986,14 +989,14 @@ def process_comic(comic, tracked_comics, comic_index):
     # Get the appropriate site adapter
     adapter = get_site_adapter(comic)
     if not adapter:
-        logger.error(f"No suitable adapter found for {comic['name']}")
+        handle_error(ValueError(f"No suitable adapter found for {comic['name']}"), "processing comic", critical=False)
         return False
     
     # Get latest chapter info
     current_chapter, chapter_url = adapter.get_latest_chapter()
     
     if not current_chapter or not chapter_url:
-        logger.error(f"Failed to retrieve current chapter for {comic['name']}. Skipping.")
+        handle_error(ValueError(f"Failed to retrieve current chapter for {comic['name']}"), "retrieving chapter information", critical=False, additional_info="Skipping comic.")
         return False
     
     # Check if this is a new chapter
@@ -1014,7 +1017,7 @@ def process_comic(comic, tracked_comics, comic_index):
     images = adapter.download_chapter_images(chapter_url)
     
     if not images:
-        logger.error(f"Failed to download images for {comic['name']} chapter {current_chapter}")
+        handle_error(ValueError(f"Failed to download images for {comic['name']} chapter {current_chapter}"), "downloading chapter images", critical=False)
         return False
     
     # Process images if template is provided
@@ -1029,7 +1032,7 @@ def process_comic(comic, tracked_comics, comic_index):
             
             images = processed_images
         except Exception as e:
-            logger.error(f"Error processing images with template: {e}")
+            handle_error(e, "processing images with template", critical=False)
     
     # Import multi-page stitcher functions
     try:
@@ -1043,7 +1046,7 @@ def process_comic(comic, tracked_comics, comic_index):
         # Stitch images with multi-page support
         stitched_images = stitch_images_multi_page(images, target_width, max_height, image_quality)
         if not stitched_images:
-            logger.error(f"Failed to stitch images for {comic['name']} chapter {current_chapter}")
+            handle_error(ValueError(f"Failed to stitch images for {comic['name']} chapter {current_chapter}"), "stitching images with multi-page stitcher", critical=False)
             return False
         
         # Save processed images
@@ -1052,7 +1055,7 @@ def process_comic(comic, tracked_comics, comic_index):
         
         saved_files = save_stitched_images(stitched_images, processed_file_template, image_quality)
         if not saved_files:
-            logger.error(f"Failed to save stitched images for {comic['name']} chapter {current_chapter}")
+            handle_error(ValueError(f"Failed to save stitched images for {comic['name']} chapter {current_chapter}"), "saving stitched images", critical=False)
             return False
         
         logger.info(f"Saved {len(saved_files)} stitched image(s) for {comic['name']} chapter {current_chapter}")
@@ -1078,12 +1081,12 @@ def process_comic(comic, tracked_comics, comic_index):
     
     except ImportError:
         # Fall back to original method if stitcher module is not available
-        logger.warning("Could not import multi-page stitcher, falling back to single-page stitching")
+        handle_error(ImportError("Could not import multi-page stitcher"), "importing stitcher module", critical=False, additional_info="Falling back to single-page stitching")
         
         # Stitch images
         stitched_image = stitch_images(images)
         if not stitched_image:
-            logger.error(f"Failed to stitch images for {comic['name']} chapter {current_chapter}")
+            handle_error(ValueError(f"Failed to stitch images for {comic['name']} chapter {current_chapter}"), "stitching images with single-page stitcher", critical=False)
             return False
         
         # Save processed image
@@ -1208,7 +1211,7 @@ def main_check_loop():
             if process_comic(comic, tracked_comics, tracked_comics.index(comic)): # Pass tracked_comics and index
                 new_chapters += 1
         except Exception as e:
-            logger.error(f"Error processing comic {comic['name']}: {e}")
+            handle_error(e, f"processing comic {comic['name']}", critical=False)
     
     # Save the updated comics data
     save_tracked_comics(tracked_comics)

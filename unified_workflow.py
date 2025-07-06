@@ -16,10 +16,18 @@ from banner_cropper import crop_banner_if_found
 # Import necessary functions from main.py
 try:
     from main import load_tracked_comics, load_settings, get_site_adapter
-    from main import upload_to_drive, send_discord_notification
+    from main import upload_to_drive, send_discord_notification, handle_error
     from main import CONFIG_FILE
 except ImportError as e:
     print(f"Error importing from main.py: {e}")
+    # Define a fallback handle_error function in case import fails
+    def handle_error(message, exception=None, critical=True):
+        if critical:
+            logger.error(message)
+        else:
+            logger.warning(message)
+        if exception:
+            logger.error(f"Exception details: {str(exception)}")
     sys.exit(1)
 
 # Set up logging
@@ -51,14 +59,14 @@ def unified_process_comic(comic, tracked_comics, comic_index):
     # Get the appropriate site adapter
     adapter = get_site_adapter(comic)
     if not adapter:
-        logger.error(f"No suitable adapter found for {comic['name']}")
+        handle_error(f"No suitable adapter found for {comic['name']}")
         return False
     
     # Get latest chapter info
     current_chapter, chapter_url = adapter.get_latest_chapter()
     
     if not current_chapter or not chapter_url:
-        logger.error(f"Failed to retrieve current chapter for {comic['name']}. Skipping.")
+        handle_error(f"Failed to retrieve current chapter for {comic['name']}. Skipping.")
         return False
     
     # Check if this is a new chapter
@@ -79,7 +87,7 @@ def unified_process_comic(comic, tracked_comics, comic_index):
     images = adapter.download_chapter_images(chapter_url)
     
     if not images:
-        logger.error(f"Failed to download images for {comic['name']} chapter {current_chapter}")
+        handle_error(f"Failed to download images for {comic['name']} chapter {current_chapter}")
         return False
     
     # Process images if template is provided
@@ -98,7 +106,7 @@ def unified_process_comic(comic, tracked_comics, comic_index):
             images = processed_images
             logger.info(f"Applied template processing to {len(images)} images")
         except Exception as e:
-            logger.error(f"Error processing images with template: {e}")
+            handle_error(f"Error processing images with template: {e}", e, critical=False)
     
     # Apply banner cropping
     banner_path = "assets/banner.png"
@@ -125,7 +133,7 @@ def unified_process_comic(comic, tracked_comics, comic_index):
                 
                 logger.info(f"Banner cropping completed successfully")
         except Exception as e:
-            logger.error(f"Error applying banner cropping: {e}")
+            handle_error(f"Error applying banner cropping: {e}", e, critical=False)
     
     # Use the multi-page stitcher module
     logger.info(f"Stitching {len(images)} images for {comic['name']} chapter {current_chapter}")
@@ -138,7 +146,7 @@ def unified_process_comic(comic, tracked_comics, comic_index):
     # Stitch images with multi-page support
     stitched_images = stitch_images_multi_page(images, target_width, max_height, image_quality)
     if not stitched_images:
-        logger.error(f"Failed to stitch images for {comic['name']} chapter {current_chapter}")
+        handle_error(f"Failed to stitch images for {comic['name']} chapter {current_chapter}")
         return False
     
     # Save processed images
@@ -147,7 +155,7 @@ def unified_process_comic(comic, tracked_comics, comic_index):
     
     saved_files = save_stitched_images(stitched_images, processed_file_template, image_quality)
     if not saved_files:
-        logger.error(f"Failed to save stitched images for {comic['name']} chapter {current_chapter}")
+        handle_error(f"Failed to save stitched images for {comic['name']} chapter {current_chapter}")
         return False
     
     logger.info(f"Saved {len(saved_files)} stitched image(s) for {comic['name']} chapter {current_chapter}")
@@ -250,7 +258,7 @@ def main():
             if unified_process_comic(comic, tracked_comics, i):
                 updates_found += 1
         except Exception as e:
-            logger.error(f"Error processing comic {comic['name']}: {e}")
+            handle_error(f"Error processing comic {comic['name']}: {e}", e)
     
     # Save the updated tracked_comics data
     comics_file = "comics.json"

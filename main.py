@@ -92,6 +92,10 @@ DEFAULT_SETTINGS = {
 BAOZI_CDN_REGEX = r'^https?://(?:[\w-]+)\.baozicdn\.com/(.+)$'
 BAOZI_CDN_REPLACEMENT = r'https://static-tw.baozimh.com/\1'
 
+# Regular expression for twmanga CDN URLs
+TWMANGA_CDN_REGEX = r'http://cdn.twmanga.com/comics/(.*)'
+TWMANGA_CDN_REPLACEMENT = r'https://static.twmanga.com/comics/\1'
+
 # ===== Utility Functions =====
 
 def handle_error(error, context="operation", critical=False):
@@ -708,6 +712,9 @@ class TwmangaAdapter(MangaSiteAdapter):
                         if img_url in previous_page_images[-duplicate_threshold:]:
                             logger.info(f"Skipping duplicate image: {img_url}")
                             continue
+                            
+                        # Apply CDN regex replacement if needed
+                        img_url = re.sub(TWMANGA_CDN_REGEX, TWMANGA_CDN_REPLACEMENT, img_url)
                         
                         # Download the image
                         try:

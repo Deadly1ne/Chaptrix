@@ -36,7 +36,11 @@ def stitch_images_multi_page(images, target_width=800, max_height=12000, quality
     
     try:
         # Track memory usage and processing time
-        start_time = time.time()
+        try:
+            start_time = time.time()
+        except Exception as e:
+            logger.warning(f"Error getting start time: {e}")
+            start_time = 0  # Fallback value
         
         # Calculate dimensions
         if not target_width or target_width <= 0:
@@ -82,8 +86,12 @@ def stitch_images_multi_page(images, target_width=800, max_height=12000, quality
             if stitched_img:
                 stitched_images.append(stitched_img)
         
-        elapsed_time = time.time() - start_time
-        logger.info(f"Stitching completed in {elapsed_time:.2f} seconds, created {len(stitched_images)} image(s)")
+        try:
+            elapsed_time = time.time() - start_time
+            logger.info(f"Stitching completed in {elapsed_time:.2f} seconds, created {len(stitched_images)} image(s)")
+        except Exception as e:
+            logger.warning(f"Error calculating elapsed time: {e}")
+            logger.info(f"Stitching completed, created {len(stitched_images)} image(s)")
         
         return stitched_images
     

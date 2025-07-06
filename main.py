@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import requests
+import time
 import zipfile
 
 # Set up logging
@@ -92,6 +93,28 @@ BAOZI_CDN_REGEX = r'^https?://(?:[\w-]+)\.baozicdn\.com/(.+)$'
 BAOZI_CDN_REPLACEMENT = r'https://static-tw.baozimh.com/\1'
 
 # ===== Utility Functions =====
+
+def handle_error(error, context="operation", critical=False):
+    """Centralized error handling function
+    
+    Args:
+        error: The exception object
+        context: String describing where the error occurred
+        critical: Boolean indicating if this is a critical error
+        
+    Returns:
+        None
+    """
+    error_type = type(error).__name__
+    error_msg = str(error)
+    
+    if critical:
+        logger.critical(f"CRITICAL ERROR in {context}: {error_type} - {error_msg}")
+    else:
+        logger.error(f"Error in {context}: {error_type} - {error_msg}")
+    
+    # Additional error handling logic can be added here
+    # For example, sending error notifications or attempting recovery
 
 def load_settings():
     """Load user settings from settings.json"""
@@ -585,17 +608,20 @@ class BaozimhAdapter(MangaSiteAdapter):
                     page_count += 1
                     
                     # Add a small delay between page requests to avoid overloading the server
-                    time.sleep(1)
+                    try:
+                        time.sleep(1)
+                    except Exception as e:
+                        logger.warning(f"Error during sleep between page requests: {e}")
                     
                 except Exception as e:
-                    logger.error(f"Error processing page {page_count}: {e}")
+                    handle_error(e, f"processing page {page_count} of chapter", critical=False)
                     break
             
             logger.info(f"Finished downloading chapter. Total pages processed: {page_count}, total images: {len(all_images)}")
             return all_images
         
         except Exception as e:
-            logger.error(f"Error downloading chapter images: {e}")
+            handle_error(e, "downloading chapter images", critical=True)
             return []
 
 

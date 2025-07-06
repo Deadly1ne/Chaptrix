@@ -253,11 +253,12 @@ def main():
             logger.error(f"Error processing comic {comic['name']}: {e}")
     
     # Save the updated tracked_comics data
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+    comics_file = "comics.json"
+    with open(comics_file, 'w', encoding='utf-8') as f:
         json.dump(tracked_comics, f, indent=4, ensure_ascii=False)
     
     logger.info(f"Check complete. Found {updates_found} new chapters.")
-    logger.info(f"Updated comic data saved to {CONFIG_FILE}")
+    logger.info(f"Updated comic data saved to {comics_file}")
 
 if __name__ == "__main__":
     main()

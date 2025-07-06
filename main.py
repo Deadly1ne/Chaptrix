@@ -1,39 +1,52 @@
 import argparse
+import asyncio
+import io
+import json
 import logging
 import os
 import re
 import requests
 import zipfile
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("chaptrix.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("Chaptrix")
+
+import discord
+from discord.ext import commands
 from google.oauth2.credentials import Credentials
-from google.protobuf.json_format import MessageToJson
-from google.protobuf.json_format import ParseDict
-from google.protobuf.json_format import ParseMessage
-from google.protobuf.json_format import ParseStruct
-from google.protobuf.json_format import StructToJson
-from google.protobuf.json_format import StructToMessage
-from google.protobuf.json_format import StructToStruct
-from google.protobuf.json_format import json_format
-from google.protobuf.json_format import message_to_json
-from google.protobuf.json_format import parse_dict
-from google.protobuf.json_format import parse_message
-from google.protobuf.json_format import parse_struct
-from google.protobuf.json_format import struct_to_json
-from google.protobuf.json_format import struct_to_message
-from google.protobuf.json_format import struct_to_struct
-from google.protobuf.json_format import request
-from google.protobuf.json_format import build
+from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+from google.auth.transport.requests import Request
+from google.auth.transport.requests import AuthorizedSession
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.protobuf.json_format import MessageToJson, Parse, ParseDict
+# Note: ParseMessage is not available in protobuf 6.31.1
 
 from PIL import Image
+from bs4 import BeautifulSoup
 
 from stitcher import stitch_images_multi_page
 from stitcher import save_stitched_images
 
-from streamlit import st
+# Import streamlit only if it's available
+try:
+    import streamlit as st
+except ImportError:
+    st = None
 
 SETTINGS_FILE = "settings.json"
 CONFIG_FILE = "comics.json"
 CREDENTIALS_FILE = "credentials.json"
+TOKEN_FILE = "token.json"
 SUPPORTED_SITES = {
     "baozimh": {
         "name": "Baozimh",

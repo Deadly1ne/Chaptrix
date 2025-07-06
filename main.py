@@ -37,6 +37,7 @@ from bs4 import BeautifulSoup
 
 from stitcher import stitch_images_multi_page
 from stitcher import save_stitched_images
+from utils import handle_error as utils_handle_error, setup_logging, load_json_config, save_json_config
 
 # Import streamlit only if it's available
 try:
@@ -98,27 +99,10 @@ TWMANGA_CDN_REPLACEMENT = r'https://static.twmanga.com/comics/\1'
 
 # ===== Utility Functions =====
 
+# Error handling moved to utils.py - using utils_handle_error
 def handle_error(error, context="operation", critical=False):
-    """Centralized error handling function
-    
-    Args:
-        error: The exception object
-        context: String describing where the error occurred
-        critical: Boolean indicating if this is a critical error
-        
-    Returns:
-        None
-    """
-    error_type = type(error).__name__
-    error_msg = str(error)
-    
-    if critical:
-        logger.critical(f"CRITICAL ERROR in {context}: {error_type} - {error_msg}")
-    else:
-        logger.error(f"Error in {context}: {error_type} - {error_msg}")
-    
-    # Additional error handling logic can be added here
-    # For example, sending error notifications or attempting recovery
+    """Wrapper for utils.handle_error to maintain compatibility"""
+    return utils_handle_error(error, context, critical)
 
 def load_settings():
     """Load user settings from settings.json"""
@@ -619,6 +603,10 @@ class BaozimhAdapter(MangaSiteAdapter):
                     
                 except Exception as e:
                     handle_error(e, f"processing page {page_count} of chapter", critical=False)
+                    try:
+                        time.sleep(5)
+                    except NameError:
+                        pass # time module not available
                     break
             
             logger.info(f"Finished downloading chapter. Total pages processed: {page_count}, total images: {len(all_images)}")
@@ -818,6 +806,10 @@ class TwmangaAdapter(MangaSiteAdapter):
                     
                 except Exception as e:
                     handle_error(e, f"processing page {page_count}", critical=False)
+                    try:
+                        time.sleep(5)
+                    except NameError:
+                        pass # time module not available
                     break
             
             logger.info(f"Finished downloading chapter. Total pages processed: {page_count}, total images: {len(all_images)}")

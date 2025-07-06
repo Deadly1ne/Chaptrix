@@ -3,16 +3,7 @@ import logging
 from PIL import Image
 import numpy as np
 import time
-
-# Import handle_error from main.py
-try:
-    from main import handle_error
-except ImportError:
-    # Fallback if handle_error is not available
-    def handle_error(error, context, critical=False, additional_info=None):
-        logger.error(f"{context}: {str(error)}")
-        if additional_info:
-            logger.info(f"Additional info: {additional_info}")
+from utils import handle_error
 
 # Set up logging
 logging.basicConfig(

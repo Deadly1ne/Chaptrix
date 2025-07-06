@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from utils import handle_error, setup_logging, load_json_config
 import logging
 from datetime import datetime
 
@@ -20,14 +21,7 @@ try:
     from main import CONFIG_FILE
 except ImportError as e:
     print(f"Error importing from main.py: {e}")
-    # Define a fallback handle_error function in case import fails
-    def handle_error(message, exception=None, critical=True):
-        if critical:
-            logger.error(message)
-        else:
-            logger.warning(message)
-        if exception:
-            logger.error(f"Exception details: {str(exception)}")
+    # Using centralized error handling from utils.py
     sys.exit(1)
 
 # Set up logging

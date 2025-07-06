@@ -48,6 +48,38 @@ An all-in-one manga chapter notification and download bot for baozimh.com
    - Download the credentials as JSON
    - Rename it to `credentials.json` and place it in the project directory
 
+## Quick Start
+
+### Using the Consolidated Launcher
+```bash
+# Check for new chapters
+run_chaptrix.bat check
+
+# Start dashboard (recommended)
+run_chaptrix.bat dashboard
+
+# Run unified workflow
+run_chaptrix.bat unified
+
+# Run test suite
+run_chaptrix.bat test
+
+# Install/update requirements
+run_chaptrix.bat install
+```
+
+### Direct Python Usage
+```bash
+# Check mode
+python main.py --check
+
+# Unified workflow
+python unified_workflow.py
+
+# Test suite
+python test_suite.py
+```
+
 ### Running the Application
 
 #### Dashboard Mode
@@ -58,10 +90,10 @@ To run the Streamlit dashboard for managing comics and settings:
 streamlit run main.py
 ```
 
-Or use the provided batch file:
+Or use the consolidated launcher:
 
 ```
-run_dashboard.bat
+run_chaptrix.bat dashboard
 ```
 
 This will open a web interface where you can:
@@ -78,10 +110,10 @@ To run a one-time check for new chapters (useful for scheduled tasks):
 python main.py --check
 ```
 
-Or use the provided batch file:
+Or use the consolidated launcher:
 
 ```
-run_check.bat
+run_chaptrix.bat check
 ```
 
 #### Unified Workflow Mode
@@ -92,10 +124,10 @@ To run the complete workflow with banner cropping and stitching functionality:
 python unified_workflow.py
 ```
 
-Or use the provided batch file:
+Or use the consolidated launcher:
 
 ```
-run_unified_workflow.bat
+run_chaptrix.bat unified
 ```
 
 
@@ -107,6 +139,28 @@ To stitch images for a specific comic and chapter:
 ```
 python stitcher.py "Comic Name" "Chapter Name" [--width WIDTH] [--height HEIGHT] [--quality QUALITY]
 ```
+
+## Testing
+
+Run the consolidated test suite to verify your setup:
+
+```bash
+# Run all tests
+run_chaptrix.bat test
+
+# Or run directly
+python test_suite.py
+```
+
+The test suite will check:
+- Python version compatibility
+- Required package installation
+- Configuration file validity
+- Directory structure
+- Image processing capabilities
+- Network connectivity
+- Stitcher functionality
+- Banner cropper setup
 
 ### Automation
 

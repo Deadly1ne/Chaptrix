@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100" viewBox="0 0 300 100">
+  <style>
+    .logo-text { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; }
+    .subtitle { font-family: Arial, sans-serif; font-size: 14px; }
+    .url { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+  </style>
+  
+  <!-- Yellow background circle for the mascot -->
+  <circle cx="50" cy="50" r="30" fill="#FFCC00"/>
+  
+  <!-- Simplified mascot shape -->
+  <path d="M50,30 C60,30 65,40 65,50 C65,65 55,70 50,70 C45,70 35,65 35,50 C35,40 40,30 50,30 Z" fill="#FFCC00" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Logo text -->
+  <text x="100" y="45" class="logo-text" fill="#000000">包子漫畫</text>
+  
+  <!-- Subtitle text -->
+  <text x="100" y="65" class="subtitle" fill="#000000">本漫畫由包子漫畫收集整理, 更多免費漫畫請訪問</text>
+  
+  <!-- URL with pointing hands -->
+  <text x="150" y="85" class="url" text-anchor="middle" fill="#000000">
+    <tspan>👉 www.baozimh.com 👈</tspan>
+  </text>
+</svg>

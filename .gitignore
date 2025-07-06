@@ -1,55 +1,123 @@
-# Credentials and tokens
-credentials.json
-token.json
-*token*
-*secret*
-*private*
-*password*
-*key*
-
-# Environment variables
-.env
-*.env
-.env.local
-.env.*.local
-
-# Downloaded and processed files
-downloads/
-processed/
-templates/
-
-# Python cache files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Distribution / packaging
-dist/
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+PYTHONPATH
 
 # Virtual environments
-venv/
+.env
+.venv
 env/
-.env/
-.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# IDE files
-.idea/
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Logs
 *.log
 logs/
 chaptrix.log
+chaptrix_unified.log
+chaptrix_tests.log
 
-# OS specific files
-.DS_Store
-Thumbs.db
+# Credentials and tokens
+credentials.json
+token.json
+service_account.json
+.env
+
+# Downloaded content
+downloads/
+processed/
+test_cropping/
+test_stitching/
+test_stitching_multi/
+debug_test/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+test_*.jpg
+test_*.png
+test_image_processing.*
+
+# Configuration files with sensitive data
+settings.json
+comics.json
 
 # Backup files
 *.bak
 *.backup
-*~
+*.old
+
+# Archive files
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Node modules (if any)
+node_modules/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Streamlit
+.streamlit/
+
+# Custom exclusions
+push_to_github_custom.bat
+integrate_*.py

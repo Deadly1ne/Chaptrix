@@ -1,9 +1,17 @@
 # Credentials and tokens
 credentials.json
 token.json
+*token*
+*secret*
+*private*
+*password*
+*key*
 
 # Environment variables
 .env
+*.env
+.env.local
+.env.*.local
 
 # Downloaded and processed files
 downloads/
@@ -24,6 +32,7 @@ build/
 venv/
 env/
 .env/
+.venv/
 
 # IDE files
 .idea/
@@ -39,3 +48,8 @@ chaptrix.log
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*~
